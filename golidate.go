@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 var ErrNotStruct = errors.New("wrong argument given, should be a struct")
@@ -67,12 +68,13 @@ func getValidator(valName string) (val validator, err ValidationError) {
 	switch valName {
 	case "non-empty":
 		val = fromIntArgValidator(func(v reflect.Value, arg int) ValidationError {
-			if v.Kind() != reflect.String {
+			if arg < 1 || v.Kind() != reflect.String {
 				return ValidationError{ErrInvalidValidatorSyntax}
 			}
 
-			if v.Len() != arg {
-				return ValidationError{errors.New("validator len")}
+			chars := utf8.RuneCountInString(v.String())
+			if chars == 0 || chars > arg {
+				return ValidationError{errors.New("validator non-empty")}
 			}
 
 			return ValidationError{}
